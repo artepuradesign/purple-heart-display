@@ -283,7 +283,6 @@ const MeusPedidos = () => {
     }
     const downloadUrl = getFullApiUrl(`/upload/serve?file=${encodeURIComponent(pedido.pdf_entrega_nome)}`);
     window.open(downloadUrl, '_blank');
-    link.click();
   };
 
   const getTypeLabel = (type: string) => {
