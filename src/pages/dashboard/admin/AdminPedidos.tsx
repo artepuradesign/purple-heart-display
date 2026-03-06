@@ -416,6 +416,50 @@ const AdminPedidos = () => {
     }
   };
 
+  const handleSavePdf = async () => {
+    if (!selectedPedido || !pdfFile) return;
+    setSavingPdf(true);
+    try {
+      const base64 = await fileToBase64(pdfFile);
+      const now = new Date();
+      const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+      const fileName = `${selectedPedido.id}_${dateStr}.pdf`;
+      const extraData = { pdf_entrega_base64: base64, pdf_entrega_nome: fileName };
+
+      let res;
+      if (selectedPedido.type === 'pdf-rg') {
+        res = await pdfRgService.atualizarStatus(selectedPedido.id, selectedPedido.status, extraData);
+      } else {
+        res = await editarPdfService.atualizarStatus(selectedPedido.id, selectedPedido.status, extraData);
+      }
+
+      if (res.success) {
+        toast.success('PDF de entrega salvo com sucesso!');
+        // Re-fetch detail
+        if (selectedPedido.type === 'pdf-rg') {
+          const detail = await pdfRgService.obter(selectedPedido.id);
+          if (detail.success && detail.data) {
+            setSelectedPedido(prev => prev ? { ...prev, raw_rg: detail.data! } : null);
+          }
+        } else {
+          const detail = await editarPdfService.obter(selectedPedido.id);
+          if (detail.success && detail.data) {
+            setSelectedPedido(prev => prev ? { ...prev, raw_personalizado: detail.data! } : null);
+          }
+        }
+        setPdfFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        loadPedidos();
+      } else {
+        toast.error(res.error || 'Erro ao salvar PDF');
+      }
+    } catch {
+      toast.error('Erro ao salvar PDF');
+    } finally {
+      setSavingPdf(false);
+    }
+  };
+
   const handleDelete = async (pedido: UnifiedPedido) => {
     if (!confirm('Tem certeza que deseja excluir este pedido?')) return;
     try {
