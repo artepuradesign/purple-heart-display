@@ -25,11 +25,85 @@ const MODULE_TITLE = 'PDF PERSONALIZADO';
 const MODULE_ROUTE = '/dashboard/pdf-personalizado';
 const MODULE_ID = 173;
 
+const STATUS_ORDER = ['realizado', 'pagamento_confirmado', 'em_confeccao', 'entregue'] as const;
+type PdfStatus = typeof STATUS_ORDER[number];
+
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   realizado: { label: 'Realizado', color: 'bg-blue-500', icon: <Package className="h-3 w-3" /> },
   pagamento_confirmado: { label: 'Pgto Confirmado', color: 'bg-emerald-500', icon: <CheckCircle className="h-3 w-3" /> },
   em_confeccao: { label: 'Em Confecção', color: 'bg-orange-500', icon: <Clock className="h-3 w-3" /> },
   entregue: { label: 'Entregue', color: 'bg-emerald-600', icon: <Truck className="h-3 w-3" /> },
+};
+
+const statusIcons: Record<string, React.ReactNode> = {
+  realizado: <Package className="h-5 w-5" />,
+  pagamento_confirmado: <CheckCircle className="h-5 w-5" />,
+  em_confeccao: <Clock className="h-5 w-5" />,
+  entregue: <Truck className="h-5 w-5" />,
+};
+
+const getStatusIndex = (status: string) => STATUS_ORDER.indexOf(status as PdfStatus);
+
+const StatusProgressTracker = ({ pedido }: { pedido: EditarPdfPedido }) => {
+  const currentIdx = getStatusIndex(pedido.status);
+
+  const getTimestamp = (step: string) => {
+    const map: Record<string, string | null> = {
+      realizado: pedido.realizado_at,
+      pagamento_confirmado: pedido.pagamento_confirmado_at,
+      em_confeccao: pedido.em_confeccao_at,
+      entregue: pedido.entregue_at,
+    };
+    return map[step];
+  };
+
+  const formatTime = (d: string) => {
+    const date = new Date(d);
+    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}, ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="w-full py-6 px-2">
+      <div className="flex items-center justify-between relative">
+        <div className="absolute top-5 left-[12%] right-[12%] h-1 bg-muted rounded-full" />
+        <div
+          className="absolute top-5 left-[12%] h-1 rounded-full transition-all duration-700 ease-out bg-emerald-500"
+          style={{ width: `${Math.max(0, (currentIdx / 3) * 76)}%` }}
+        />
+        {STATUS_ORDER.map((step, idx) => {
+          const isCompleted = idx < currentIdx;
+          const isCurrent = idx === currentIdx;
+          const isActive = idx <= currentIdx;
+          const isEmConfeccao = step === 'em_confeccao' && isCurrent;
+          const timestamp = getTimestamp(step);
+
+          return (
+            <div key={step} className="flex flex-col items-center z-10 flex-1">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
+                isCompleted || (isCurrent && step === 'entregue')
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                  : isEmConfeccao
+                  ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 animate-pulse'
+                  : isCurrent
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                  : 'bg-muted text-muted-foreground'
+              } ${isCurrent ? 'ring-4 ring-emerald-500/20 scale-110' : ''}`}>
+                {isCompleted ? <CheckCircle className="h-5 w-5" /> : statusIcons[step]}
+              </div>
+              <span className={`text-[10px] sm:text-xs mt-2 text-center leading-tight max-w-[80px] ${
+                isActive ? (isEmConfeccao ? 'text-blue-600 font-semibold' : 'text-emerald-600 font-semibold') : 'text-muted-foreground'
+              }`}>
+                {STATUS_LABELS[step].label}
+              </span>
+              {timestamp && isActive && (
+                <span className="text-[9px] text-muted-foreground mt-0.5">{formatTime(timestamp)}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 };
 
 interface FormData {
