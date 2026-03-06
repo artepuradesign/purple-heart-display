@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { FileText, Loader2, AlertCircle, CheckCircle, Upload, Download, Package, Clock, Truck } from 'lucide-react';
+import { FileText, Loader2, AlertCircle, CheckCircle, Upload, Download, Package, Clock, Truck, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { getFullApiUrl } from '@/utils/apiHelper';
 import { useAuth } from '@/contexts/AuthContext';
