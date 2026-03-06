@@ -639,11 +639,17 @@ const EditarPdf = () => {
                 </div>
               )}
 
-              {pedidoDetalhe.status === 'entregue' && pedidoDetalhe.pdf_entrega_nome && (
+              {/* Progress Tracker */}
+              <div className="border-t pt-2">
+                <StatusProgressTracker pedido={pedidoDetalhe} />
+              </div>
+
+              {/* Download do PDF entregue */}
+              {pedidoDetalhe.status === 'entregue' && (pedidoDetalhe.pdf_entrega_nome || pedidoDetalhe.pdf_entrega_base64) && (
                 <div className="border-t pt-3">
                   <p className="text-muted-foreground mb-2">📄 PDF Entregue:</p>
                   <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => handleDownloadPdf(pedidoDetalhe)}>
-                    <Download className="h-4 w-4 mr-2" /> {pedidoDetalhe.pdf_entrega_nome}
+                    <Download className="h-4 w-4 mr-2" /> {pedidoDetalhe.pdf_entrega_nome || 'Baixar PDF'}
                   </Button>
                 </div>
               )}
