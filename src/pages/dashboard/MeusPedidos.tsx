@@ -481,11 +481,11 @@ const MeusPedidos = () => {
                 </div>
               )}
 
-              {selectedPedido.status === 'entregue' && selectedPedido.pdf_entrega_nome && (
+              {selectedPedido.status === 'entregue' && (selectedPedido.pdf_entrega_nome || selectedPedido.pdf_entrega_base64) && (
                 <div className="border-t pt-3">
                   <p className="text-muted-foreground mb-2">📄 PDF Entregue:</p>
                   <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleDownload(selectedPedido)}>
-                    <Download className="h-4 w-4 mr-2" /> {selectedPedido.pdf_entrega_nome}
+                    <Download className="h-4 w-4 mr-2" /> {selectedPedido.pdf_entrega_nome || 'Download PDF'}
                   </Button>
                 </div>
               )}
