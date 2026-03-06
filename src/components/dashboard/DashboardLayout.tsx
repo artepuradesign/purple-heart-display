@@ -44,12 +44,8 @@ const DashboardLayout = ({
   // Para admin/suporte, sempre expandida em desktop e tablet
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
-      const isDesktopOrTablet = window.innerWidth >= 768;
-      // Admin/suporte: sempre expandido em desktop/tablet
-      if (isSupport && isDesktopOrTablet) {
-        return false;
-      }
-      return window.innerWidth <= 1024;
+      // Sempre iniciar expandido em desktop/tablet
+      return window.innerWidth < 768; // Apenas colapsado em mobile
     }
     return false;
   });
