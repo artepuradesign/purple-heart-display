@@ -13,6 +13,7 @@ import ReferralsSection from '@/components/historico/sections/ReferralsSection';
 import CouponsSection from '@/components/historico/sections/CouponsSection';
 import PurchasesSection from '@/components/historico/sections/PurchasesSection';
 import PixPaymentsSection from '@/components/dashboard/PixPaymentsSection';
+import PdfOrdersHistorySection from '@/components/historico/sections/PdfOrdersHistorySection';
 import { useAuth } from '@/contexts/AuthContext';
 import { walletApiService } from '@/services/walletApiService';
 import { cupomApiService } from '@/services/cupomApiService';
@@ -298,6 +299,18 @@ const Historico = () => {
                 formatDate={formatDate}
                 loading={state.loading}
               />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Seção: Pedidos PDF (RG + Personalizado) */}
+        <div className="space-y-2 sm:space-y-3">
+          <div className="bg-card border border-border rounded-lg px-4 py-2.5">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">Pedidos PDF (RG + Personalizado)</h2>
+          </div>
+          <Card>
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <PdfOrdersHistorySection />
             </CardContent>
           </Card>
         </div>

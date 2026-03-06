@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, CreditCard, Hammer, CheckCircle2, Loader2 } from 'lucide-react';
 import { pdfRgService } from '@/services/pdfRgService';
+import { editarPdfService } from '@/services/pdfPersonalizadoService';
 import { useNavigate } from 'react-router-dom';
 
 const AdminServicesSummary = () => {
@@ -12,17 +13,22 @@ const AdminServicesSummary = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [r1, r2, r3, r4] = await Promise.all([
+        const [r1, r2, r3, r4, p1, p2, p3, p4] = await Promise.all([
           pdfRgService.listar({ status: 'realizado', limit: 1 }),
           pdfRgService.listar({ status: 'pagamento_confirmado', limit: 1 }),
           pdfRgService.listar({ status: 'em_confeccao', limit: 1 }),
           pdfRgService.listar({ status: 'entregue', limit: 1 }),
+          editarPdfService.listar({ status: 'realizado', limit: 1 }),
+          editarPdfService.listar({ status: 'pagamento_confirmado', limit: 1 }),
+          editarPdfService.listar({ status: 'em_confeccao', limit: 1 }),
+          editarPdfService.listar({ status: 'entregue', limit: 1 }),
         ]);
+        const get = (r: any) => (r.success && r.data ? r.data.pagination.total : 0);
         setCounts({
-          realizado: r1.success && r1.data ? r1.data.pagination.total : 0,
-          pagamento_confirmado: r2.success && r2.data ? r2.data.pagination.total : 0,
-          em_confeccao: r3.success && r3.data ? r3.data.pagination.total : 0,
-          entregue: r4.success && r4.data ? r4.data.pagination.total : 0,
+          realizado: get(r1) + get(p1),
+          pagamento_confirmado: get(r2) + get(p2),
+          em_confeccao: get(r3) + get(p3),
+          entregue: get(r4) + get(p4),
         });
       } catch (e) {
         console.warn('Erro ao carregar resumo de serviços:', e);
