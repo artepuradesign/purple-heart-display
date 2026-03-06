@@ -88,6 +88,26 @@ class PdfPersonalizadoController {
         }
     }
 
+    public function deletarPdf() {
+        try {
+            $raw = file_get_contents('php://input');
+            $input = json_decode($raw, true);
+            if (!$input || !isset($input['id'])) {
+                Response::error('ID é obrigatório', 400);
+                return;
+            }
+
+            $success = $this->model->deletarPdf((int)$input['id']);
+            if ($success) {
+                Response::success(['id' => (int)$input['id']], 'PDF deletado');
+            } else {
+                Response::error('Erro ao deletar PDF', 500);
+            }
+        } catch (Exception $e) {
+            Response::error('Erro ao deletar PDF: ' . $e->getMessage(), 400);
+        }
+    }
+
     public function deletar() {
         try {
             $id = $_GET['id'] ?? null;

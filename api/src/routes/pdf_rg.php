@@ -33,7 +33,10 @@ switch ($method) {
         break;
 
     case 'POST':
-        if (strpos($path, '/pdf-rg/status') !== false) {
+        if (strpos($path, '/pdf-rg/delete-pdf') !== false) {
+            // POST /pdf-rg/delete-pdf - deletar PDF de entrega
+            $controller->deletarPdf();
+        } elseif (strpos($path, '/pdf-rg/status') !== false) {
             // POST /pdf-rg/status - atualizar status (admin)
             $controller->atualizarStatus();
         } elseif (strpos($path, '/pdf-rg') !== false && !preg_match('/\/pdf-rg\/\d+/', $path)) {

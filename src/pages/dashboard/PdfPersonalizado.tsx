@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { FileText, Loader2, AlertCircle, CheckCircle, Upload, Download, Package, Clock, Truck } from 'lucide-react';
 import { toast } from 'sonner';
+import { getFullApiUrl } from '@/utils/apiHelper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -275,14 +276,13 @@ const EditarPdf = () => {
   };
 
   const handleDownloadPdf = (pedido: EditarPdfPedido) => {
-    if (!pedido.pdf_entrega_base64 || !pedido.pdf_entrega_nome) {
+    if (!pedido.pdf_entrega_nome) {
       toast.error('PDF ainda não disponível');
       return;
     }
-    const link = document.createElement('a');
-    link.href = pedido.pdf_entrega_base64;
-    link.download = pedido.pdf_entrega_nome;
-    link.click();
+    // Abrir URL de download do servidor
+    const downloadUrl = getFullApiUrl(`/upload/serve?file=${encodeURIComponent(pedido.pdf_entrega_nome)}`);
+    window.open(downloadUrl, '_blank');
   };
 
   if (balanceCheckLoading || modulePriceLoading) {
@@ -508,9 +508,20 @@ const EditarPdf = () => {
                 <div>
                   <p className="text-muted-foreground mb-1">Anexos:</p>
                   <div className="flex flex-wrap gap-2">
-                    {[pedidoDetalhe.anexo1_nome, pedidoDetalhe.anexo2_nome, pedidoDetalhe.anexo3_nome].filter(Boolean).map((nome, i) => (
-                      <Badge key={i} variant="secondary" className="text-xs"><Upload className="h-3 w-3 mr-1" />{nome}</Badge>
-                    ))}
+                    {[
+                      { nome: pedidoDetalhe.anexo1_nome, label: 'Anexo 1' },
+                      { nome: pedidoDetalhe.anexo2_nome, label: 'Anexo 2' },
+                      { nome: pedidoDetalhe.anexo3_nome, label: 'Anexo 3' },
+                    ].filter(a => a.nome).map((a, i) => {
+                      const downloadUrl = getFullApiUrl(`/upload/serve?file=${encodeURIComponent(a.nome!)}`);
+                      return (
+                        <Badge key={i} variant="secondary" className="text-xs cursor-pointer hover:bg-secondary/80">
+                          <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                            <Download className="h-3 w-3" /> {a.label}
+                          </a>
+                        </Badge>
+                      );
+                    })}
                   </div>
                 </div>
               )}

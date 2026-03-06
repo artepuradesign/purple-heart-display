@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/BaseModel.php';
+require_once __DIR__ . '/../utils/FileUpload.php';
 
 class PdfPersonalizado extends BaseModel {
     protected $table = 'pdf_personalizado';
@@ -18,11 +19,11 @@ class PdfPersonalizado extends BaseModel {
             'user_id'            => isset($data['user_id']) ? (int)$data['user_id'] : null,
             'nome_solicitante'   => trim($data['nome_solicitante'] ?? ''),
             'descricao_alteracoes' => trim($data['descricao_alteracoes'] ?? ''),
-            'anexo1_base64'      => $data['anexo1_base64'] ?? null,
+            'anexo1_base64'      => null,
             'anexo1_nome'        => $data['anexo1_nome'] ?? null,
-            'anexo2_base64'      => $data['anexo2_base64'] ?? null,
+            'anexo2_base64'      => null,
             'anexo2_nome'        => $data['anexo2_nome'] ?? null,
-            'anexo3_base64'      => $data['anexo3_base64'] ?? null,
+            'anexo3_base64'      => null,
             'anexo3_nome'        => $data['anexo3_nome'] ?? null,
             'status'             => 'pagamento_confirmado',
             'preco_pago'         => (float)($data['preco_pago'] ?? 0),
@@ -48,7 +49,25 @@ class PdfPersonalizado extends BaseModel {
         $payload['nome_solicitante'] = trim($data['nome_solicitante'] ?? '');
         $payload['descricao_alteracoes'] = trim($data['descricao_alteracoes'] ?? '');
 
-        return parent::create($payload);
+        $id = parent::create($payload);
+
+        // Salvar anexos em disco com nome padronizado
+        for ($i = 1; $i <= 3; $i++) {
+            $base64Key = "anexo{$i}_base64";
+            $nomeKey = "anexo{$i}_nome";
+            if (!empty($data[$base64Key])) {
+                $originalName = $data[$nomeKey] ?? "anexo{$i}.pdf";
+                $prefix = "pdfpers_{$id}_anexo{$i}";
+                $savedName = FileUpload::saveBase64File($data[$base64Key], $originalName, $prefix);
+                if ($savedName) {
+                    // Atualizar o registro com o nome do arquivo salvo
+                    $stmt = $this->db->prepare("UPDATE {$this->table} SET {$nomeKey} = ? WHERE id = ?");
+                    $stmt->execute([$savedName, $id]);
+                }
+            }
+        }
+
+        return $id;
     }
 
     public function listarPedidos($userId = null, $status = null, $limit = 20, $offset = 0, $search = null) {
@@ -134,11 +153,18 @@ class PdfPersonalizado extends BaseModel {
         $sets[] = "$timestampCol = ?";
         $params[] = $now;
 
+        // Salvar PDF de entrega em disco se fornecido
         if (isset($extraData['pdf_entrega_base64'])) {
-            $sets[] = 'pdf_entrega_base64 = ?';
-            $params[] = $extraData['pdf_entrega_base64'];
-        }
-        if (isset($extraData['pdf_entrega_nome'])) {
+            $pdfNome = $extraData['pdf_entrega_nome'] ?? 'entrega.pdf';
+            $prefix = "pdfpers_{$id}_entrega";
+            $savedName = FileUpload::saveBase64File($extraData['pdf_entrega_base64'], $pdfNome, $prefix);
+            if ($savedName) {
+                $sets[] = 'pdf_entrega_nome = ?';
+                $params[] = $savedName;
+                // Não armazenar base64 no banco
+                $sets[] = 'pdf_entrega_base64 = NULL';
+            }
+        } elseif (isset($extraData['pdf_entrega_nome'])) {
             $sets[] = 'pdf_entrega_nome = ?';
             $params[] = $extraData['pdf_entrega_nome'];
         }
@@ -149,7 +175,34 @@ class PdfPersonalizado extends BaseModel {
         return $stmt->execute($params);
     }
 
+    public function deletarPdf($id) {
+        // Buscar nome do arquivo atual para deletar do disco
+        $stmt = $this->db->prepare("SELECT pdf_entrega_nome FROM {$this->table} WHERE id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row && !empty($row['pdf_entrega_nome'])) {
+            FileUpload::deleteFile($row['pdf_entrega_nome']);
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $query = "UPDATE {$this->table} SET pdf_entrega_base64 = NULL, pdf_entrega_nome = NULL, updated_at = ? WHERE id = ?";
+        $stmt = $this->db->prepare($query);
+        return $stmt->execute([$now, (int)$id]);
+    }
+
     public function deletarPedido($id) {
+        // Deletar arquivos do disco antes de remover o registro
+        $stmt = $this->db->prepare("SELECT anexo1_nome, anexo2_nome, anexo3_nome, pdf_entrega_nome FROM {$this->table} WHERE id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            foreach (['anexo1_nome', 'anexo2_nome', 'anexo3_nome', 'pdf_entrega_nome'] as $field) {
+                if (!empty($row[$field])) {
+                    FileUpload::deleteFile($row[$field]);
+                }
+            }
+        }
+
         $query = "DELETE FROM {$this->table} WHERE id = ?";
         $stmt = $this->db->prepare($query);
         return $stmt->execute([$id]);

@@ -453,6 +453,12 @@ try {
         exit();
     }
     
+    // Upload/serve de arquivos da pasta arquivosupload
+    if (strpos($endpoint, '/upload/') === 0) {
+        include __DIR__ . '/src/routes/upload.php';
+        exit();
+    }
+
     // Upload de BO (PDF Boletim de Ocorrência)
     if ($endpoint === '/upload-bo' || $endpoint === '/upload-bo.php') {
         include __DIR__ . '/upload-bo.php';

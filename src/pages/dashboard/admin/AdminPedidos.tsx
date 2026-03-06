@@ -391,18 +391,22 @@ const AdminPedidos = () => {
     if (!confirm('Tem certeza que deseja apagar o PDF enviado?')) return;
     setDeletingPdf(true);
     try {
+      let res;
       if (selectedPedido.type === 'pdf-rg') {
-        const res = await pdfRgService.deletarPdf(selectedPedido.id);
-        if (res.success) {
-          toast.success('PDF apagado com sucesso');
-          setSelectedPedido(prev => prev && prev.raw_rg ? { ...prev, raw_rg: { ...prev.raw_rg, pdf_entrega_base64: null, pdf_entrega_nome: null } } : prev);
-          loadPedidos();
-        } else {
-          toast.error(res.error || 'Erro ao apagar PDF');
-        }
+        res = await pdfRgService.deletarPdf(selectedPedido.id);
       } else {
-        // pdf-personalizado doesn't have deletarPdf, update status to remove
-        toast.error('Funcionalidade não disponível para PDF Personalizado');
+        res = await editarPdfService.deletarPdf(selectedPedido.id);
+      }
+      if (res.success) {
+        toast.success('PDF apagado com sucesso');
+        if (selectedPedido.type === 'pdf-rg') {
+          setSelectedPedido(prev => prev && prev.raw_rg ? { ...prev, raw_rg: { ...prev.raw_rg, pdf_entrega_base64: null, pdf_entrega_nome: null } } : prev);
+        } else {
+          setSelectedPedido(prev => prev && prev.raw_personalizado ? { ...prev, raw_personalizado: { ...prev.raw_personalizado, pdf_entrega_base64: null, pdf_entrega_nome: null } } : prev);
+        }
+        loadPedidos();
+      } else {
+        toast.error(res.error || 'Erro ao apagar PDF');
       }
     } catch {
       toast.error('Erro ao apagar PDF');
@@ -503,15 +507,14 @@ const AdminPedidos = () => {
         <div className="flex gap-2 flex-wrap">
           {[1, 2, 3].map(i => {
             const nome = (raw as any)[`anexo${i}_nome`];
-            const base64 = (raw as any)[`anexo${i}_base64`];
             if (!nome) return null;
+            // Construir URL de download do servidor
+            const downloadUrl = getFullApiUrl(`/upload/serve?file=${encodeURIComponent(nome)}`);
             return (
-              <Badge key={i} variant="secondary" className="gap-1">
-                {base64 ? (
-                  <a href={`data:application/octet-stream;base64,${base64}`} download={nome} className="flex items-center gap-1">
-                    <Download className="h-3 w-3" /> {nome}
-                  </a>
-                ) : nome}
+              <Badge key={i} variant="secondary" className="gap-1 cursor-pointer hover:bg-secondary/80">
+                <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                  <Download className="h-3 w-3" /> Anexo {i}
+                </a>
               </Badge>
             );
           })}
@@ -657,18 +660,16 @@ const AdminPedidos = () => {
                       <CheckCircle className="h-3 w-3 text-emerald-500" />
                       PDF enviado: <strong>{existingPdfNome}</strong>
                     </p>
-                    {selectedPedido.type === 'pdf-rg' && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={handleDeletePdf}
-                        disabled={deletingPdf}
-                        title="Apagar PDF"
-                      >
-                        {deletingPdf ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={handleDeletePdf}
+                      disabled={deletingPdf}
+                      title="Apagar PDF"
+                    >
+                      {deletingPdf ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                    </Button>
                   </div>
                 )}
 
