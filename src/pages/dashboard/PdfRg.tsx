@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText, Loader2, AlertCircle, CheckCircle, Upload, Download, Eye, Package, Clock, Truck } from 'lucide-react';
 import { toast } from 'sonner';
+import { getFullApiUrl } from '@/utils/apiHelper';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
