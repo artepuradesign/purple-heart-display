@@ -303,6 +303,18 @@ const Historico = () => {
           </Card>
         </div>
 
+        {/* Seção: Pedidos PDF (RG + Personalizado) */}
+        <div className="space-y-2 sm:space-y-3">
+          <div className="bg-card border border-border rounded-lg px-4 py-2.5">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">Pedidos PDF (RG + Personalizado)</h2>
+          </div>
+          <Card>
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <PdfOrdersHistorySection />
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Seção: Compras */}
         <div className="space-y-2 sm:space-y-3">
           <div className="bg-card border border-border rounded-lg px-4 py-2.5">
