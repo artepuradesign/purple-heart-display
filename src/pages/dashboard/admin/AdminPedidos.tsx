@@ -158,6 +158,7 @@ const AdminPedidos = () => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [deletingPdf, setDeletingPdf] = useState(false);
+  const [savingPdf, setSavingPdf] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
