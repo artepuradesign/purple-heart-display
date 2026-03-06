@@ -357,7 +357,7 @@ const UnifiedAdminStatsCards: React.FC<UnifiedAdminStatsCardsProps> = ({ dashboa
   const pedidosData = [
     {
       title: "Pedidos Aprovados",
-      rawValue: pedidoStats.aprovados,
+      rawValue: pedidoStats.pendentes,
       isCurrency: false,
       icon: CheckCircle,
       bgColor: "bg-blue-500/10",
@@ -367,7 +367,7 @@ const UnifiedAdminStatsCards: React.FC<UnifiedAdminStatsCardsProps> = ({ dashboa
     },
     {
       title: "Em Confecção",
-      rawValue: pedidoStats.pendentes,
+      rawValue: pedidoStats.aprovados,
       isCurrency: false,
       icon: ClipboardList,
       bgColor: "bg-amber-500/10",
