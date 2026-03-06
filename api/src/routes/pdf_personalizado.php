@@ -40,7 +40,9 @@ switch ($method) {
         break;
 
     case 'POST':
-        if (strpos($path, '/pdf-personalizado/status') !== false) {
+        if (strpos($path, '/pdf-personalizado/delete-pdf') !== false) {
+            $controller->deletarPdf();
+        } elseif (strpos($path, '/pdf-personalizado/status') !== false) {
             $controller->atualizarStatus();
         } else {
             $controller->criar();
