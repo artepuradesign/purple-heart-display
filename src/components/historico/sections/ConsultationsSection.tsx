@@ -1,8 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText } from 'lucide-react';
+import { FileText, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface HistoryItem {
@@ -15,6 +14,7 @@ interface HistoryItem {
   status?: string;
   created_at: string;
   result_data?: any;
+  metadata?: any;
   [key: string]: any;
 }
 
@@ -49,7 +49,6 @@ const ConsultationsSection: React.FC<ConsultationsSectionProps> = ({
       return;
     }
 
-    // Redirecionar para página de consulta com os dados no state
     navigate(pageRoute, {
       state: {
         fromHistory: true,
@@ -62,29 +61,6 @@ const ConsultationsSection: React.FC<ConsultationsSectionProps> = ({
     toast.success('Consulta carregada do histórico (sem cobrança)', { duration: 2000 });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3 text-muted-foreground">Carregando consultas...</span>
-      </div>
-    );
-  }
-
-  if (consultationItems.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        <FileText className="h-12 w-12 text-muted-foreground/60 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">
-          Nenhuma consulta encontrada
-        </h3>
-        <p className="text-sm">
-          Suas consultas realizadas aparecerão aqui
-        </p>
-      </div>
-    );
-  }
-
   const formatCPF = (cpf: string) => {
     if (!cpf || cpf === 'CPF consultado') return 'N/A';
     const cleaned = cpf.replace(/\D/g, '');
@@ -95,148 +71,89 @@ const ConsultationsSection: React.FC<ConsultationsSectionProps> = ({
   };
 
   const formatFullDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      return new Date(dateString).toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    } catch { return dateString; }
   };
 
-  return (
-    <div className="space-y-3 sm:space-y-4">
-      {/* Desktop Table View */}
-      <div className="hidden md:block overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-20">ID</TableHead>
-              <TableHead className="w-32">CPF</TableHead>
-              <TableHead className="w-32">Módulo</TableHead>
-              <TableHead className="w-48">Data e Hora</TableHead>
-              <TableHead className="w-24 text-right">Valor</TableHead>
-              <TableHead className="w-24 text-center">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {consultationItems.map((consultation) => {
-              const consultationValue = consultation.cost || consultation.amount || 0;
-              const valueString = String(consultationValue);
-              const numericValue = typeof consultationValue === 'string' 
-                ? parseFloat(valueString.replace(',', '.')) 
-                : Math.abs(Number(consultationValue)) || 0;
+  const getModuleLabel = (consultation: HistoryItem): string => {
+    return (
+      consultation.metadata?.module_title ||
+      consultation.module_type ||
+      'CPF'
+    ).toString().toUpperCase();
+  };
 
-              return (
-                <TableRow 
-                  key={consultation.id}
-                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                  onClick={() => handleConsultationClick(consultation)}
-                >
-                  <TableCell className="font-mono text-xs">
-                    {consultation.id.toString().slice(0, 8)}...
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {formatCPF(consultation.document || '')}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <Badge variant="outline" className="text-xs">
-                      {(consultation.metadata?.module_title || consultation.module_type || 'N/A').toString().toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {formatFullDate(consultation.created_at)}
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-medium text-red-600 dark:text-red-400">
-                    R$ {numericValue.toFixed(2).replace('.', ',')}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge 
-                      variant={consultation.status === 'success' || consultation.status === 'completed' ? 'default' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {consultation.status === 'success' || consultation.status === 'completed' ? 'Concluída' : 'Pendente'}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+  if (loading) {
+    return (
+      <div className="text-center py-6">
+        <RefreshCw className="h-6 w-6 animate-spin text-primary mx-auto mb-2" />
+        <p className="text-muted-foreground text-sm">Carregando consultas...</p>
       </div>
+    );
+  }
 
-      {/* Mobile Card View */}
-      <div className="block md:hidden">
-        <div className="rounded-lg border border-border bg-card divide-y divide-border">
-        {consultationItems.map((consultation) => {
-          const consultationValue = consultation.cost || consultation.amount || 0;
-          const valueString = String(consultationValue);
-          const numericValue = typeof consultationValue === 'string' 
-            ? parseFloat(valueString.replace(',', '.')) 
-            : Math.abs(Number(consultationValue)) || 0;
+  if (consultationItems.length === 0) {
+    return (
+      <div className="text-center py-6 text-muted-foreground">
+        <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <p className="text-sm">Nenhuma consulta registrada</p>
+      </div>
+    );
+  }
 
-          const statusIsDone = consultation.status === 'success' || consultation.status === 'completed';
-          const moduleLabel = (consultation.module_type || '').toString().trim().toUpperCase();
+  return (
+    <div className="space-y-2">
+      {consultationItems.map((consultation) => {
+        const consultationValue = consultation.cost || consultation.amount || 0;
+        const numericValue = typeof consultationValue === 'string'
+          ? parseFloat(String(consultationValue).replace(',', '.'))
+          : Math.abs(Number(consultationValue)) || 0;
+        const statusIsDone = consultation.status === 'success' || consultation.status === 'completed';
+        const moduleLabel = getModuleLabel(consultation);
 
-          return (
-            <button
-              key={consultation.id}
-              type="button"
-              onClick={() => handleConsultationClick(consultation)}
-              className="w-full text-left px-3 py-2.5 hover:bg-muted/50 active:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                {/* Status indicator */}
-                <span
-                  className={`flex-shrink-0 h-2 w-2 rounded-full ${statusIsDone ? 'bg-primary' : 'bg-muted-foreground'}`}
-                  aria-label={statusIsDone ? 'Concluída' : 'Pendente'}
-                />
-
-                {/* Main content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-medium truncate">
-                          {formatCPF(consultation.document || '')}
-                        </span>
-                        {moduleLabel ? (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] px-1.5 py-0 h-4 flex-shrink-0"
-                          >
-                            {moduleLabel}
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <div className="mt-0.5 text-[10px] text-muted-foreground">
-                        {formatFullDate(consultation.created_at)}
-                      </div>
-                    </div>
-
-                    {/* Right side */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <div className="text-right">
-                        <div className="text-xs font-medium text-destructive">
-                          {formatBrazilianCurrency(numericValue)}
-                        </div>
-                      </div>
-                      <Badge
-                        variant={statusIsDone ? 'default' : 'secondary'}
-                        className="text-[10px] h-5 px-2"
-                      >
-                        {statusIsDone ? 'OK' : '...'}
-                      </Badge>
-                    </div>
-                  </div>
+        return (
+          <div
+            key={consultation.id}
+            onClick={() => handleConsultationClick(consultation)}
+            className="border rounded-lg p-3 bg-card border-l-4 border-l-emerald-500 cursor-pointer hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-sm font-medium font-mono">
+                  {formatCPF(consultation.document || '')}
+                </p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">
+                    {formatFullDate(consultation.created_at)}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] px-1.5 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                  >
+                    {moduleLabel}
+                  </Badge>
+                  <Badge
+                    variant={statusIsDone ? 'default' : 'secondary'}
+                    className="text-[10px] px-1.5 py-0 h-4"
+                  >
+                    {statusIsDone ? 'Concluída' : 'Pendente'}
+                  </Badge>
                 </div>
               </div>
-            </button>
-          );
-        })}
-        </div>
-      </div>
+              <Badge
+                variant="secondary"
+                className="text-xs font-semibold px-2 bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 flex-shrink-0"
+              >
+                -R$ {numericValue.toFixed(2).replace('.', ',')}
+              </Badge>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

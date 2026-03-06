@@ -146,23 +146,29 @@ const Historico = () => {
         
         apiConsultations = userConsultas.map((consulta: any) => {
           const valorCobrado = parseFloat(consulta.cost || 0);
+          const meta = consulta.metadata ? (typeof consulta.metadata === 'string' ? JSON.parse(consulta.metadata) : consulta.metadata) : {};
 
           return {
             id: `CPF-${consulta.id}`,
             type: 'consultation',
-            module_type: 'cpf',
+            module_type: consulta.module_type || meta?.module_type || 'cpf',
             document: consulta.document || 'CPF consultado',
             cost: valorCobrado,
             amount: -Math.abs(valorCobrado),
             saldo_usado: 'carteira',
-            status: 'success',
+            status: consulta.status || 'success',
             created_at: consulta.created_at,
             updated_at: consulta.created_at,
             category: 'consultation',
             source_table: 'consultas_history',
             balance_type: 'wallet',
             description: `Consulta CPF ${consulta.document ? consulta.document.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : ''}`,
-            result_data: consulta.result_data
+            result_data: consulta.result_data,
+            metadata: {
+              ...meta,
+              module_title: meta?.module_title || consulta.module_type || 'CPF',
+              page_route: meta?.page_route || null,
+            }
           };
         });
         
