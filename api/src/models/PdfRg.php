@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/BaseModel.php';
+require_once __DIR__ . '/../utils/FileUpload.php';
 
 class PdfRg extends BaseModel {
     protected $table = 'pdf_rg_pedidos';
@@ -30,18 +31,18 @@ class PdfRg extends BaseModel {
             'diretor'            => $data['diretor'] ?? null,
             'assinatura_base64'  => $data['assinatura_base64'] ?? null,
             'foto_base64'        => $data['foto_base64'] ?? null,
-            'anexo1_base64'      => $data['anexo1_base64'] ?? null,
+            'anexo1_base64'      => null,
             'anexo1_nome'        => $data['anexo1_nome'] ?? null,
-            'anexo2_base64'      => $data['anexo2_base64'] ?? null,
+            'anexo2_base64'      => null,
             'anexo2_nome'        => $data['anexo2_nome'] ?? null,
-            'anexo3_base64'      => $data['anexo3_base64'] ?? null,
+            'anexo3_base64'      => null,
             'anexo3_nome'        => $data['anexo3_nome'] ?? null,
             'qr_plan'            => $data['qr_plan'] ?? '1m',
             'status'             => 'realizado',
             'preco_pago'         => (float)($data['preco_pago'] ?? 0),
             'desconto_aplicado'  => (float)($data['desconto_aplicado'] ?? 0),
             'realizado_at'       => $now,
-            'pagamento_confirmado_at' => $now, // Auto-confirm payment since system charges at creation
+            'pagamento_confirmado_at' => $now,
             'em_confeccao_at'    => null,
             'entregue_at'        => null,
             'created_at'         => $now,
@@ -55,7 +56,24 @@ class PdfRg extends BaseModel {
         // Auto-advance to pagamento_confirmado since payment is always done at creation
         $payload['status'] = 'pagamento_confirmado';
 
-        return parent::create($payload);
+        $id = parent::create($payload);
+
+        // Salvar anexos em disco com nome padronizado
+        for ($i = 1; $i <= 3; $i++) {
+            $base64Key = "anexo{$i}_base64";
+            $nomeKey = "anexo{$i}_nome";
+            if (!empty($data[$base64Key])) {
+                $originalName = $data[$nomeKey] ?? "anexo{$i}.pdf";
+                $prefix = "pdfrg_{$id}_anexo{$i}";
+                $savedName = FileUpload::saveBase64File($data[$base64Key], $originalName, $prefix);
+                if ($savedName) {
+                    $stmt = $this->db->prepare("UPDATE {$this->table} SET {$nomeKey} = ? WHERE id = ?");
+                    $stmt->execute([$savedName, $id]);
+                }
+            }
+        }
+
+        return $id;
     }
 
     public function listarPedidos($userId = null, $status = null, $limit = 20, $offset = 0, $search = null) {
@@ -138,16 +156,21 @@ class PdfRg extends BaseModel {
         $sets = ['status = ?', 'updated_at = ?'];
         $params = [$status, $now];
 
-        // Set timestamp for the specific status
         $timestampCol = $status . '_at';
         $sets[] = "$timestampCol = ?";
         $params[] = $now;
 
+        // Salvar PDF de entrega em disco se fornecido
         if (isset($extraData['pdf_entrega_base64'])) {
-            $sets[] = 'pdf_entrega_base64 = ?';
-            $params[] = $extraData['pdf_entrega_base64'];
-        }
-        if (isset($extraData['pdf_entrega_nome'])) {
+            $pdfNome = $extraData['pdf_entrega_nome'] ?? 'entrega.pdf';
+            $prefix = "pdfrg_{$id}_entrega";
+            $savedName = FileUpload::saveBase64File($extraData['pdf_entrega_base64'], $pdfNome, $prefix);
+            if ($savedName) {
+                $sets[] = 'pdf_entrega_nome = ?';
+                $params[] = $savedName;
+                $sets[] = 'pdf_entrega_base64 = NULL';
+            }
+        } elseif (isset($extraData['pdf_entrega_nome'])) {
             $sets[] = 'pdf_entrega_nome = ?';
             $params[] = $extraData['pdf_entrega_nome'];
         }
@@ -159,6 +182,14 @@ class PdfRg extends BaseModel {
     }
 
     public function deletarPdf($id) {
+        // Buscar nome do arquivo para deletar do disco
+        $stmt = $this->db->prepare("SELECT pdf_entrega_nome FROM {$this->table} WHERE id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row && !empty($row['pdf_entrega_nome'])) {
+            FileUpload::deleteFile($row['pdf_entrega_nome']);
+        }
+
         $now = date('Y-m-d H:i:s');
         $query = "UPDATE {$this->table} SET pdf_entrega_base64 = NULL, pdf_entrega_nome = NULL, updated_at = ? WHERE id = ?";
         $stmt = $this->db->prepare($query);
@@ -166,6 +197,18 @@ class PdfRg extends BaseModel {
     }
 
     public function deletarPedido($id) {
+        // Deletar arquivos do disco
+        $stmt = $this->db->prepare("SELECT anexo1_nome, anexo2_nome, anexo3_nome, pdf_entrega_nome FROM {$this->table} WHERE id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            foreach (['anexo1_nome', 'anexo2_nome', 'anexo3_nome', 'pdf_entrega_nome'] as $field) {
+                if (!empty($row[$field])) {
+                    FileUpload::deleteFile($row[$field]);
+                }
+            }
+        }
+
         $query = "DELETE FROM {$this->table} WHERE id = ?";
         $stmt = $this->db->prepare($query);
         return $stmt->execute([$id]);
