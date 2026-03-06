@@ -277,12 +277,51 @@ const MeusPedidos = () => {
   };
 
   const handleDownload = (pedido: UnifiedPedido) => {
-    if (!pedido.pdf_entrega_nome) {
+    if (!pedido.pdf_entrega_nome && !pedido.pdf_entrega_base64) {
       toast.error('PDF ainda não disponível');
       return;
     }
-    const downloadUrl = getFullApiUrl(`/upload/serve?file=${encodeURIComponent(pedido.pdf_entrega_nome)}`);
-    window.open(downloadUrl, '_blank');
+
+    // Se temos base64, criar download direto (funciona para arquivos legados e novos)
+    if (pedido.pdf_entrega_base64) {
+      try {
+        let base64Data = pedido.pdf_entrega_base64;
+        let mimeType = 'application/pdf';
+        
+        if (base64Data.includes(',')) {
+          const parts = base64Data.split(',');
+          const header = parts[0];
+          base64Data = parts[1];
+          const mimeMatch = header.match(/data:([^;]+)/);
+          if (mimeMatch) mimeType = mimeMatch[1];
+        }
+        
+        const byteChars = atob(base64Data);
+        const byteNumbers = new Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) {
+          byteNumbers[i] = byteChars.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = pedido.pdf_entrega_nome || 'entrega.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return;
+      } catch (e) {
+        console.error('Erro ao criar download do base64:', e);
+      }
+    }
+
+    // Fallback: tentar via endpoint de serve
+    if (pedido.pdf_entrega_nome) {
+      const downloadUrl = getFullApiUrl(`/upload/serve?file=${encodeURIComponent(pedido.pdf_entrega_nome)}`);
+      window.open(downloadUrl, '_blank');
+    }
   };
 
   const getTypeLabel = (type: string) => {
