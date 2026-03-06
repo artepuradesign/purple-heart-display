@@ -391,18 +391,22 @@ const AdminPedidos = () => {
     if (!confirm('Tem certeza que deseja apagar o PDF enviado?')) return;
     setDeletingPdf(true);
     try {
+      let res;
       if (selectedPedido.type === 'pdf-rg') {
-        const res = await pdfRgService.deletarPdf(selectedPedido.id);
-        if (res.success) {
-          toast.success('PDF apagado com sucesso');
-          setSelectedPedido(prev => prev && prev.raw_rg ? { ...prev, raw_rg: { ...prev.raw_rg, pdf_entrega_base64: null, pdf_entrega_nome: null } } : prev);
-          loadPedidos();
-        } else {
-          toast.error(res.error || 'Erro ao apagar PDF');
-        }
+        res = await pdfRgService.deletarPdf(selectedPedido.id);
       } else {
-        // pdf-personalizado doesn't have deletarPdf, update status to remove
-        toast.error('Funcionalidade não disponível para PDF Personalizado');
+        res = await editarPdfService.deletarPdf(selectedPedido.id);
+      }
+      if (res.success) {
+        toast.success('PDF apagado com sucesso');
+        if (selectedPedido.type === 'pdf-rg') {
+          setSelectedPedido(prev => prev && prev.raw_rg ? { ...prev, raw_rg: { ...prev.raw_rg, pdf_entrega_base64: null, pdf_entrega_nome: null } } : prev);
+        } else {
+          setSelectedPedido(prev => prev && prev.raw_personalizado ? { ...prev, raw_personalizado: { ...prev.raw_personalizado, pdf_entrega_base64: null, pdf_entrega_nome: null } } : prev);
+        }
+        loadPedidos();
+      } else {
+        toast.error(res.error || 'Erro ao apagar PDF');
       }
     } catch {
       toast.error('Erro ao apagar PDF');
