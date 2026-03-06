@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { getFullApiUrl } from '@/utils/apiHelper';
 import { pdfRgService, PdfRgPedido, PdfRgStatus } from '@/services/pdfRgService';
 import { editarPdfService, EditarPdfPedido, EditarPdfStatus } from '@/services/pdfPersonalizadoService';
 import { Eye, Download, Loader2, Package, DollarSign, Hammer, CheckCircle, ClipboardList, Upload, FileDown, FileText } from 'lucide-react';
