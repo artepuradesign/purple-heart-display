@@ -660,18 +660,16 @@ const AdminPedidos = () => {
                       <CheckCircle className="h-3 w-3 text-emerald-500" />
                       PDF enviado: <strong>{existingPdfNome}</strong>
                     </p>
-                    {selectedPedido.type === 'pdf-rg' && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={handleDeletePdf}
-                        disabled={deletingPdf}
-                        title="Apagar PDF"
-                      >
-                        {deletingPdf ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={handleDeletePdf}
+                      disabled={deletingPdf}
+                      title="Apagar PDF"
+                    >
+                      {deletingPdf ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                    </Button>
                   </div>
                 )}
 
