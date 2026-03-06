@@ -158,6 +158,7 @@ const AdminPedidos = () => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [deletingPdf, setDeletingPdf] = useState(false);
+  const [savingPdf, setSavingPdf] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -412,6 +413,50 @@ const AdminPedidos = () => {
       toast.error('Erro ao apagar PDF');
     } finally {
       setDeletingPdf(false);
+    }
+  };
+
+  const handleSavePdf = async () => {
+    if (!selectedPedido || !pdfFile) return;
+    setSavingPdf(true);
+    try {
+      const base64 = await fileToBase64(pdfFile);
+      const now = new Date();
+      const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+      const fileName = `${selectedPedido.id}_${dateStr}.pdf`;
+      const extraData = { pdf_entrega_base64: base64, pdf_entrega_nome: fileName };
+
+      let res;
+      if (selectedPedido.type === 'pdf-rg') {
+        res = await pdfRgService.atualizarStatus(selectedPedido.id, selectedPedido.status, extraData);
+      } else {
+        res = await editarPdfService.atualizarStatus(selectedPedido.id, selectedPedido.status, extraData);
+      }
+
+      if (res.success) {
+        toast.success('PDF de entrega salvo com sucesso!');
+        // Re-fetch detail
+        if (selectedPedido.type === 'pdf-rg') {
+          const detail = await pdfRgService.obter(selectedPedido.id);
+          if (detail.success && detail.data) {
+            setSelectedPedido(prev => prev ? { ...prev, raw_rg: detail.data! } : null);
+          }
+        } else {
+          const detail = await editarPdfService.obter(selectedPedido.id);
+          if (detail.success && detail.data) {
+            setSelectedPedido(prev => prev ? { ...prev, raw_personalizado: detail.data! } : null);
+          }
+        }
+        setPdfFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        loadPedidos();
+      } else {
+        toast.error(res.error || 'Erro ao salvar PDF');
+      }
+    } catch {
+      toast.error('Erro ao salvar PDF');
+    } finally {
+      setSavingPdf(false);
     }
   };
 
@@ -681,9 +726,20 @@ const AdminPedidos = () => {
                   className="cursor-pointer"
                 />
                 {pdfFile && (
-                  <p className="text-xs text-emerald-600 flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3" /> {pdfFile.name}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-emerald-600 flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" /> {pdfFile.name}
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={handleSavePdf}
+                      disabled={savingPdf}
+                      className="gap-1"
+                    >
+                      {savingPdf ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                      {savingPdf ? 'Salvando...' : 'Salvar PDF'}
+                    </Button>
+                  </div>
                 )}
               </div>
 
