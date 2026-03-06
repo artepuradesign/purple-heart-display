@@ -435,16 +435,20 @@ const AdminPedidos = () => {
 
       if (res.success) {
         toast.success('PDF de entrega salvo com sucesso!');
-        // Re-fetch detail
+        // Re-fetch detail and update selectedPedido with new pdf name
         if (selectedPedido.type === 'pdf-rg') {
           const detail = await pdfRgService.obter(selectedPedido.id);
           if (detail.success && detail.data) {
-            setSelectedPedido(prev => prev ? { ...prev, raw_rg: detail.data! } : null);
+            setSelectedPedido(prev => prev ? { ...prev, pdf_entrega_nome: detail.data!.pdf_entrega_nome || fileName, raw_rg: detail.data! } : null);
+          } else {
+            setSelectedPedido(prev => prev ? { ...prev, pdf_entrega_nome: fileName } : null);
           }
         } else {
           const detail = await editarPdfService.obter(selectedPedido.id);
           if (detail.success && detail.data) {
-            setSelectedPedido(prev => prev ? { ...prev, raw_personalizado: detail.data! } : null);
+            setSelectedPedido(prev => prev ? { ...prev, pdf_entrega_nome: detail.data!.pdf_entrega_nome || fileName, raw_personalizado: detail.data! } : null);
+          } else {
+            setSelectedPedido(prev => prev ? { ...prev, pdf_entrega_nome: fileName } : null);
           }
         }
         setPdfFile(null);
