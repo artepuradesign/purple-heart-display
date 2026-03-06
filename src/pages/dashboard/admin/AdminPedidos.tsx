@@ -726,9 +726,20 @@ const AdminPedidos = () => {
                   className="cursor-pointer"
                 />
                 {pdfFile && (
-                  <p className="text-xs text-emerald-600 flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3" /> {pdfFile.name}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-emerald-600 flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" /> {pdfFile.name}
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={handleSavePdf}
+                      disabled={savingPdf}
+                      className="gap-1"
+                    >
+                      {savingPdf ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                      {savingPdf ? 'Salvando...' : 'Salvar PDF'}
+                    </Button>
+                  </div>
                 )}
               </div>
 
