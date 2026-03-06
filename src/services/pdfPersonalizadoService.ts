@@ -95,6 +95,13 @@ export const editarPdfService = {
     });
   },
 
+  async deletarPdf(id: number) {
+    return apiRequest<{ id: number }>('/pdf-personalizado/delete-pdf', {
+      method: 'POST',
+      body: JSON.stringify({ id }),
+    });
+  },
+
   async stats() {
     return apiRequest<{ pendentes: number; aprovados: number; finalizados: number; total: number; total_valor: number }>('/pdf-personalizado/stats');
   },

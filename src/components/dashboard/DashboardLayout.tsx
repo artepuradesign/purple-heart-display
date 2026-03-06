@@ -52,14 +52,9 @@ const DashboardLayout = ({
   
   // Definir estado inicial apenas UMA VEZ no mount
   useEffect(() => {
-    const isDesktopOrTablet = window.innerWidth >= 768;
-    if (isSupport && isDesktopOrTablet) {
-      setCollapsed(false);
-    } else {
-      const isDesktop = window.innerWidth > 1024;
-      setCollapsed(!isDesktop);
-    }
-  }, [isSupport]);
+    // Apenas colapsado em mobile
+    setCollapsed(window.innerWidth < 768);
+  }, []);
   
   // Prevenir duplicação de notificações
   useNotificationDuplicationPrevention();
