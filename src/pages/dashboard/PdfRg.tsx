@@ -481,14 +481,12 @@ const PdfRg = () => {
   };
 
   const handleDownloadPdf = (pedido: PdfRgPedido) => {
-    if (!pedido.pdf_entrega_base64 || !pedido.pdf_entrega_nome) {
+    if (!pedido.pdf_entrega_nome) {
       toast.error('PDF ainda não disponível');
       return;
     }
-    const link = document.createElement('a');
-    link.href = pedido.pdf_entrega_base64;
-    link.download = pedido.pdf_entrega_nome;
-    link.click();
+    const downloadUrl = getFullApiUrl(`/upload/serve?file=${encodeURIComponent(pedido.pdf_entrega_nome)}`);
+    window.open(downloadUrl, '_blank');
   };
 
   if (balanceCheckLoading || modulePriceLoading) {
