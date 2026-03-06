@@ -63,6 +63,7 @@ type UnifiedPedido = {
   pagamento_confirmado_at: string | null;
   em_confeccao_at: string | null;
   entregue_at: string | null;
+  pdf_entrega_nome?: string | null;
   raw_rg?: PdfRgPedido;
   raw_personalizado?: EditarPdfPedido;
 };
@@ -377,6 +378,8 @@ const AdminPedidos = () => {
 
   const getExistingPdfNome = () => {
     if (!selectedPedido) return null;
+    // Check unified field first (updated after save), then raw data
+    if (selectedPedido.pdf_entrega_nome) return selectedPedido.pdf_entrega_nome;
     if (selectedPedido.type === 'pdf-rg') return selectedPedido.raw_rg?.pdf_entrega_nome;
     return selectedPedido.raw_personalizado?.pdf_entrega_nome;
   };
