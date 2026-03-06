@@ -63,6 +63,7 @@ type UnifiedPedido = {
   pagamento_confirmado_at: string | null;
   em_confeccao_at: string | null;
   entregue_at: string | null;
+  pdf_entrega_nome?: string | null;
   raw_rg?: PdfRgPedido;
   raw_personalizado?: EditarPdfPedido;
 };
