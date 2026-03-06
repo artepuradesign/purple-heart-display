@@ -13,6 +13,7 @@ import ReferralsSection from '@/components/historico/sections/ReferralsSection';
 import CouponsSection from '@/components/historico/sections/CouponsSection';
 import PurchasesSection from '@/components/historico/sections/PurchasesSection';
 import PixPaymentsSection from '@/components/dashboard/PixPaymentsSection';
+import PdfOrdersHistorySection from '@/components/historico/sections/PdfOrdersHistorySection';
 import { useAuth } from '@/contexts/AuthContext';
 import { walletApiService } from '@/services/walletApiService';
 import { cupomApiService } from '@/services/cupomApiService';
