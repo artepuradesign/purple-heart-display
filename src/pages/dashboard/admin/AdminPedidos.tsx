@@ -507,15 +507,14 @@ const AdminPedidos = () => {
         <div className="flex gap-2 flex-wrap">
           {[1, 2, 3].map(i => {
             const nome = (raw as any)[`anexo${i}_nome`];
-            const base64 = (raw as any)[`anexo${i}_base64`];
             if (!nome) return null;
+            // Construir URL de download do servidor
+            const downloadUrl = getFullApiUrl(`/upload/serve?file=${encodeURIComponent(nome)}`);
             return (
-              <Badge key={i} variant="secondary" className="gap-1">
-                {base64 ? (
-                  <a href={`data:application/octet-stream;base64,${base64}`} download={nome} className="flex items-center gap-1">
-                    <Download className="h-3 w-3" /> {nome}
-                  </a>
-                ) : nome}
+              <Badge key={i} variant="secondary" className="gap-1 cursor-pointer hover:bg-secondary/80">
+                <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                  <Download className="h-3 w-3" /> Anexo {i}
+                </a>
               </Badge>
             );
           })}
